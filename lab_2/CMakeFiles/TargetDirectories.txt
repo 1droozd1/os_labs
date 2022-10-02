@@ -1,0 +1,4 @@
+/home/dr0ozd1/Coding/Lab_os/lab_2/CMakeFiles/child_process.dir
+/home/dr0ozd1/Coding/Lab_os/lab_2/CMakeFiles/main.dir
+/home/dr0ozd1/Coding/Lab_os/lab_2/CMakeFiles/edit_cache.dir
+/home/dr0ozd1/Coding/Lab_os/lab_2/CMakeFiles/rebuild_cache.dir
