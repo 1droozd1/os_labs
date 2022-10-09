@@ -2,18 +2,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 int sum_from_char(char *s)
 {
-    int len = sizeof(s)/sizeof(char);
-    int sum = 0, n = 0;
+    int i = 0, sum = 0, n = 0, flag1 = 0;
+    int len = strlen(s);
 
-    for (int i = 0; i < (len + 1); ++i) {
-        if (s[i] >= '0' && s[i] <= '9') {
+    for (int i = 0; i < len; ++i) {
+        if (s[i] >= '0' && s[i] <= '9' && flag1 == 0) {
             n = n * 10 + (s[i] - '0');
-        } else if (n) { // complete number
+        } else if (flag1 == 1 && s[i] >= '0' && s[i] <= '9') {
+            n = n * 10 - (s[i] - '0');
+        } else if (s[i] == '-') {
+            flag1 = 1;
+        } else if (s[i] == ' ' && flag1 == 1) {
+            flag1 = 0;
             sum += n;
             n = 0;
+            continue;
+        } else if (n) {
+            sum += n;
+            n = 0;
+            flag1 = 0;
         }
     }
     return sum + n;
