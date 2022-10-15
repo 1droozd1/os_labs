@@ -31,8 +31,8 @@ void *threads_searching(void* args)
             printf("Pattern found at index %d \n", i);
         }
     }
-    free(tdata->txt);
 
+    free(tdata);
     pthread_exit(NULL);
 }
 
@@ -40,7 +40,6 @@ void *threads_searching(void* args)
 int main(int argc, char *argv[]) 
 {
     pthread_t *th;
-    struct thread_data tdata;
     int threads_amount = atoi(argv[0]);
 
     if (threads_amount < 2) {
@@ -49,13 +48,12 @@ int main(int argc, char *argv[])
     }
     printf("Amount of threads = %d\n", threads_amount);
 
-    
     int len_txt;
     printf("Write amount of symbols in text: ");
     scanf("%d", &len_txt);
 
     char *text;
-    text = (char*) malloc(len_txt * sizeof(char));
+    text = (char*) malloc(len_txt * sizeof(char)); //free
 
     for (int i = 0; i < len_txt; i++) {
         char randomletter = "ABC"[random () % 3];
@@ -77,19 +75,27 @@ int main(int argc, char *argv[])
         printf("Too many threads, max amount of threads is %d\n", threads_amount);
     }
 
-    th = (pthread_t *) malloc(threads_amount * sizeof(pthread_t));
+    th = (pthread_t *) malloc(threads_amount * sizeof(double)); //free
+    if (th == NULL) {
+        printf("Error with threads\n");
+    }
 
-    tdata.pat = *pat;
-    int kolSym_in_str = len_txt / threads_amount;
+    int kolSym_in_str = max_threads_amount;
+    char *strok;
 
+    for (int i = 0; i < len_txt - lenght_pat; i += kolSym_in_str) { //ошибка в цикле - поправить его границы
 
-    for (int i = 0; i < len_txt - lenght_pat; i += kolSym_in_str) {
+        thread_data *tdata = malloc(sizeof(thread_data));
 
-        char *strok = (char*) malloc(kolSym_in_str * sizeof(char));
-        strncpy(strok, i, kolSym_in_str);
+        printf("3\n");
 
-        tdata.txt = *strok;
-        tdata.i = i;
+        tdata -> pat = (char *)&pat;
+
+        strok = (char*) malloc(kolSym_in_str * sizeof(char)); //free
+        strncpy(strok, (char *) &text[i] , kolSym_in_str);
+
+        tdata -> txt = (char *)&strok;
+        tdata -> i = i;
 
         if ((pthread_create(&th[i], NULL, threads_searching, (void *)&tdata)) != 0) {
             perror("Failed to create thread");
@@ -101,8 +107,13 @@ int main(int argc, char *argv[])
             perror("Failed to join thread");
         }
     }
-    
-    free(text);
-    free(th);
+
+    free(strok);//
+    strok = NULL;
+    free(text);//
+    text = NULL;
+    free(th); //
+    th = NULL;
+
     return 0;
 }
