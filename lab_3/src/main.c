@@ -65,9 +65,15 @@ int main(int argc, char *argv[])
     char pat[20];
     printf("Write pattern - ");
     scanf("%s", pat);
-    printf("Pattern = %s\n", pat);
 
     int lenght_pat = strlen(pat);
+
+    while (lenght_pat > len_txt) {
+        printf("Wrong pattern, write pattern less than a string: \n");
+        scanf("%s", pat);
+        printf("Pattern = %s\n", pat);
+    }
+
     int max_threads_amount = len_txt / lenght_pat;
 
     if (threads_amount > max_threads_amount) {
@@ -76,6 +82,7 @@ int main(int argc, char *argv[])
     }
 
     th = (pthread_t *) malloc(threads_amount * sizeof(double)); //free
+    
     if (th == NULL) {
         printf("Error with threads\n");
     }
