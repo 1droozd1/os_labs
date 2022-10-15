@@ -29,6 +29,10 @@ int main()
 
     tdata.a = 1;
     tdata.b = 2;
+    
+
+    int test = 35 / 11;
+    printf("%d\n", test);
 
     int massive[8];
     
