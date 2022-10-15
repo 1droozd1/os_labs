@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     scanf("%d", &len_txt);
 
     char *text;
-    text = (char*) malloc(len_txt * sizeof(char)); //free
+    text = (char*) malloc(len_txt * sizeof(char));
 
     for (int i = 0; i < len_txt; i++) {
         char randomletter = "ABC"[random () % 3];
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         printf("Too many threads, max amount of threads is %d\n", threads_amount);
     }
 
-    th = (pthread_t *) malloc(threads_amount * sizeof(double)); //free
+    th = (pthread_t *) malloc(threads_amount * sizeof(double));
     
     if (th == NULL) {
         printf("Error with threads\n");
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     int kolSym_in_str = max_threads_amount;
     char *strok;
 
-    for (int i = 0; i < len_txt - lenght_pat; i += kolSym_in_str) { //ошибка в цикле - поправить его границы
+    for (int i = 0; i < len_txt - lenght_pat; i += kolSym_in_str) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 
         tdata -> pat = (char *)&pat;
 
-        strok = (char*) malloc(kolSym_in_str * sizeof(char)); //free
+        strok = (char*) malloc(kolSym_in_str * sizeof(char));
         strncpy(strok, (char *) &text[i] , kolSym_in_str);
 
         tdata -> txt = (char *)&strok;
@@ -115,11 +115,11 @@ int main(int argc, char *argv[])
         }
     }
 
-    free(strok);//
+    free(strok);
     strok = NULL;
-    free(text);//
+    free(text);
     text = NULL;
-    free(th); //
+    free(th); 
     th = NULL;
 
     return 0;
