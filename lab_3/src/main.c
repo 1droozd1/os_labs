@@ -87,20 +87,30 @@ int main(int argc, char *argv[])
         printf("Error with threads\n");
     }
 
-    int kolSym_in_str = max_threads_amount;
+    int kolSym_in_str = (len_txt / threads_amount) + (lenght_pat - 1);
     char *strok;
 
-    for (int i = 0; i < len_txt - lenght_pat; i += kolSym_in_str) {
+    int flag1 = 0;
+
+    if (len_txt % threads_amount != 0) {
+        flag1 = 1;
+    }
+
+    for (int i = 0, j = 0; i < threads_amount; i++) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
 
         printf("3\n");
+        
+        if (flag1 == 1) {
+            if ()
+
+        } else {
+            strok = (char*) malloc((kolSym_in_str + lenght_pat) * sizeof(char));
+            strncpy(strok, (char *) &text[i] , kolSym_in_str);
+        }
 
         tdata -> pat = (char *)&pat;
-
-        strok = (char*) malloc(kolSym_in_str * sizeof(char));
-        strncpy(strok, (char *) &text[i] , kolSym_in_str);
-
         tdata -> txt = (char *)&strok;
         tdata -> i = i;
 
