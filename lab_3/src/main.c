@@ -7,7 +7,6 @@ typedef struct thread_data {
 
     char *pat;
     char *txt;
-    int i;
 
 } thread_data;
 
@@ -18,20 +17,19 @@ void *threads_searching(void* args)
 
     char *pat = tdata -> pat;
     char *txt = tdata -> txt;
-    int i = tdata -> i;
 
     int len_of_pattern = strlen(pat);
     int len_of_str = strlen(txt);
-
-    int j;
-    for (j = 0; j < len_of_pattern; j++) {
-        if (txt[i + j] != pat[j])
-            break;
-        if (j == len_of_pattern) {
+ 
+    for (int i = 0; i <= len_of_str - len_of_pattern; i++) {
+        int j;
+        for (j = 0; j < len_of_pattern; j++) {
+            if (txt[i + j] != pat[j])
+                break;
+            if (j == len_of_pattern)
             printf("Pattern found at index %d \n", i);
         }
     }
-
     free(tdata);
     pthread_exit(NULL);
 }
@@ -124,7 +122,6 @@ int main(int argc, char *argv[])
 
         tdata -> pat = (char *)&pat;
         tdata -> txt = (char *)&strok;
-        tdata -> i = i;
 
         j += kolSym_in_str;
 
