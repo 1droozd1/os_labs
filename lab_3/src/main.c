@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
         printf("Error with threads\n");
     }
 
-    int kolSym_in_str = (len_txt / threads_amount) + (lenght_pat - 1);
+    int kolSym_in_str = (len_txt / threads_amount);
     char *strok;
 
     int flag1 = 0;
@@ -99,27 +99,41 @@ int main(int argc, char *argv[])
     for (int i = 0, j = 0; i < threads_amount; i++) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
-
-        printf("3\n");
         
-        if (flag1 == 1) {
-            if ()
+        if (flag1 == 1) { // the number of text characters is not 
+                          //divisible by the number of threads
 
-        } else {
-            strok = (char*) malloc((kolSym_in_str + lenght_pat) * sizeof(char));
-            strncpy(strok, (char *) &text[i] , kolSym_in_str);
+            if (i) {
+                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
+                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
+            } else if (i == threads_amount - 1) {
+                strok = (char*) malloc((kolSym_in_str + (len_txt % threads_amount)) * (sizeof(char)));
+                strncpy(strok, (char *) &text[j], kolSym_in_str + (len_txt % threads_amount));
+            }
+
+        } else { //the number of characters divided by the number of threads (without modulo)
+
+            if (i) {
+                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
+                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
+            } else if (i == threads_amount - 1) {
+                strok = (char*) malloc((kolSym_in_str) * sizeof(char));
+                strncpy(strok, (char *) &text[j], kolSym_in_str);
+            }
         }
 
         tdata -> pat = (char *)&pat;
         tdata -> txt = (char *)&strok;
         tdata -> i = i;
 
+        j += kolSym_in_str;
+
         if ((pthread_create(&th[i], NULL, threads_searching, (void *)&tdata)) != 0) {
             perror("Failed to create thread");
         }
     }
 
-    for (int i = 0; i < len_txt - lenght_pat; i++) {
+    for (int i = 0; i < threads_amount; i++) {
         if ((pthread_join(th[i], NULL)) != 0) {
             perror("Failed to join thread");
         }
