@@ -10,6 +10,8 @@ typedef struct thread_data {
 
 } thread_data;
 
+pthread_mutex_t mutex;
+
 
 void *threads_searching(void* args)
 {
@@ -31,7 +33,7 @@ void *threads_searching(void* args)
         }
     }
     free(tdata);
-    pthread_exit(NULL);
+    return NULL;
 }
 
 
@@ -94,7 +96,9 @@ int main(int argc, char *argv[])
         flag1 = 1;
     }
 
-    for (int i = 0, j = 0; i < threads_amount; i++) {
+    int j = 0;
+
+    for (int i = 0; i < threads_amount; ++i) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
         
@@ -102,21 +106,30 @@ int main(int argc, char *argv[])
                           //divisible by the number of threads
 
             if (i) {
+
                 strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-            } else if (i == threads_amount - 1) {
+                
+            } else if (i == (threads_amount - 1)) {
+
                 strok = (char*) malloc((kolSym_in_str + (len_txt % threads_amount)) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + (len_txt % threads_amount));
+
             }
 
         } else { //the number of characters divided by the number of threads (without modulo)
 
             if (i) {
+
                 strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-            } else if (i == threads_amount - 1) {
+                printf("%d %s\n", i, strok);
+
+            } else if (i == (threads_amount - 1)) {
+
                 strok = (char*) malloc((kolSym_in_str) * sizeof(char));
                 strncpy(strok, (char *) &text[j], kolSym_in_str);
+                printf("%d %s\n", i, strok);
             }
         }
 
@@ -130,18 +143,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    for (int i = 0; i < threads_amount; i++) {
+    for (int i = 0; i < threads_amount; ++i) {
         if ((pthread_join(th[i], NULL)) != 0) {
             perror("Failed to join thread");
         }
     }
 
     free(strok);
-    strok = NULL;
     free(text);
-    text = NULL;
-    free(th); 
-    th = NULL;
-
+    free(th);
+    
     return 0;
 }
