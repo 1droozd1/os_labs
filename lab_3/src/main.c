@@ -12,26 +12,40 @@ typedef struct thread_data {
 
 pthread_mutex_t mutex;
 
-
 void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
 
-    char *pat = tdata -> pat;
-    char *txt = tdata -> txt;
+    pthread_mutex_lock(&mutex);
+    char *pattern = tdata->pat;
+    char *string_from_text = tdata->txt;
+    
+    int len_of_pattern = strlen(pattern);
+    int len_of_str = strlen(string_from_text);
+    
 
-    int len_of_pattern = strlen(pat);
-    int len_of_str = strlen(txt);
+    printf("%s\n", pattern);
+    printf("%s\n", string_from_text);
  
-    for (int i = 0; i <= len_of_str - len_of_pattern; i++) {
-        int j;
-        for (j = 0; j < len_of_pattern; j++) {
-            if (txt[i + j] != pat[j])
+    int flag1 = 0;
+ 
+    for (int i = 0; i < len_of_str - len_of_pattern; i++) {
+        for (int j = 0; j < len_of_pattern; j++) {
+            if (string_from_text[i + j] != pattern[j]) {
                 break;
-            if (j == len_of_pattern)
-            printf("Pattern found at index %d \n", i);
+            }
+            if (j == len_of_pattern - 1) {
+                printf("Pattern found at index %d \n", i);
+                flag1 = 1;
+            }
         }
     }
+
+    if (flag1 == 0) {
+        printf("No pattern\n");
+    }
+    
+    pthread_mutex_unlock(&mutex);
     free(tdata);
     return NULL;
 }
@@ -81,7 +95,7 @@ int main(int argc, char *argv[])
         printf("Too many threads, max amount of threads is %d\n", threads_amount);
     }
 
-    th = (pthread_t *) malloc(threads_amount * sizeof(double));
+    th = (pthread_t *) malloc(threads_amount * sizeof(pthread_t));
     
     if (th == NULL) {
         printf("Error with threads\n");
@@ -98,38 +112,42 @@ int main(int argc, char *argv[])
 
     int j = 0;
 
-    for (int i = 0; i < threads_amount; ++i) {
+    for (int i = 0; i < threads_amount; i++) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
+        pthread_mutex_init(&mutex, NULL);
         
         if (flag1 == 1) { // the number of text characters is not 
                           //divisible by the number of threads
 
-            if (i) {
-
-                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
-                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                
-            } else if (i == (threads_amount - 1)) {
+            if (i == (threads_amount - 1)) {
 
                 strok = (char*) malloc((kolSym_in_str + (len_txt % threads_amount)) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + (len_txt % threads_amount));
+                printf("%d %s\n", i + 1, strok);
+                
+            } else {
+
+                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
+                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
+                printf("%d %s\n", i + 1, strok);
 
             }
 
         } else { //the number of characters divided by the number of threads (without modulo)
 
-            if (i) {
-
-                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
-                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                printf("%d %s\n", i, strok);
-
-            } else if (i == (threads_amount - 1)) {
+            if (i == (threads_amount - 1)) {
 
                 strok = (char*) malloc((kolSym_in_str) * sizeof(char));
                 strncpy(strok, (char *) &text[j], kolSym_in_str);
-                printf("%d %s\n", i, strok);
+                printf("%d %s\n", i + 1, strok);
+
+            } else {
+
+                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
+                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
+                printf("%d %s\n", i + 1, strok);
+
             }
         }
 
@@ -138,16 +156,18 @@ int main(int argc, char *argv[])
 
         j += kolSym_in_str;
 
-        if ((pthread_create(&th[i], NULL, threads_searching, (void *)&tdata)) != 0) {
+        if ((pthread_create(&th[i], NULL, threads_searching, (void *)tdata)) != 0) {
             perror("Failed to create thread");
         }
     }
 
-    for (int i = 0; i < threads_amount; ++i) {
+    for (int i = 0; i < threads_amount; i++) {
         if ((pthread_join(th[i], NULL)) != 0) {
             perror("Failed to join thread");
         }
     }
+
+    pthread_mutex_destroy(&mutex);
 
     free(strok);
     free(text);
