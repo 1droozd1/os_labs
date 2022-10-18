@@ -3,6 +3,8 @@
 #include "pthread.h"
 #include "string.h"
 
+#include <unistd.h>
+
 typedef struct thread_data {
 
     char *pat;
@@ -15,6 +17,8 @@ pthread_mutex_t mutex;
 void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
+
+    sleep(1);
 
     pthread_mutex_lock(&mutex);
     char *pattern = tdata->pat;
@@ -111,11 +115,11 @@ int main(int argc, char *argv[])
     }
 
     int j = 0;
+    pthread_mutex_init(&mutex, NULL);
 
     for (int i = 0; i < threads_amount; i++) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
-        pthread_mutex_init(&mutex, NULL);
         
         if (flag1 == 1) { // the number of text characters is not 
                           //divisible by the number of threads
@@ -153,6 +157,13 @@ int main(int argc, char *argv[])
 
         tdata -> pat = (char *)&pat;
         tdata -> txt = (char *)&strok;
+
+        /*char *pointer;
+        pointer = (char *) &strok;
+
+        printf("%p\n", &strok);
+        printf("%s\n", *pointer);
+        printf("%c\n", *(tdata -> txt));*/
 
         j += kolSym_in_str;
 
