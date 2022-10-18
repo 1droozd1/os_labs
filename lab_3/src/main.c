@@ -17,8 +17,8 @@ void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
 
-    char *pat = tdata -> pat;
-    char *txt = tdata -> txt;
+    char *pat = (tdata)-> pat;
+    char *txt = (tdata)-> txt;
 
     int len_of_pattern = strlen(pat);
     int len_of_str = strlen(txt);
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         printf("Too many threads, max amount of threads is %d\n", threads_amount);
     }
 
-    th = (pthread_t *) malloc(threads_amount * sizeof(double));
+    th = (pthread_t *) malloc(threads_amount * sizeof(pthread_t));
     
     if (th == NULL) {
         printf("Error with threads\n");
@@ -98,38 +98,41 @@ int main(int argc, char *argv[])
 
     int j = 0;
 
-    for (int i = 0; i < threads_amount; ++i) {
+    for (int i = 0; i < threads_amount; i++) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
         
         if (flag1 == 1) { // the number of text characters is not 
                           //divisible by the number of threads
 
-            if (i) {
-
-                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
-                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                
-            } else if (i == (threads_amount - 1)) {
+            if (i == (threads_amount - 1)) {
 
                 strok = (char*) malloc((kolSym_in_str + (len_txt % threads_amount)) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + (len_txt % threads_amount));
+                printf("%d %s\n", i + 1, strok);
+                
+            } else {
+
+                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
+                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
+                printf("%d %s\n", i + 1, strok);
 
             }
 
         } else { //the number of characters divided by the number of threads (without modulo)
 
-            if (i) {
-
-                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
-                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                printf("%d %s\n", i, strok);
-
-            } else if (i == (threads_amount - 1)) {
+            if (i == (threads_amount - 1)) {
 
                 strok = (char*) malloc((kolSym_in_str) * sizeof(char));
                 strncpy(strok, (char *) &text[j], kolSym_in_str);
-                printf("%d %s\n", i, strok);
+                printf("%d %s\n", i + 1, strok);
+
+            } else {
+
+                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
+                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
+                printf("%d %s\n", i + 1, strok);
+
             }
         }
 
@@ -138,12 +141,12 @@ int main(int argc, char *argv[])
 
         j += kolSym_in_str;
 
-        if ((pthread_create(&th[i], NULL, threads_searching, (void *)&tdata)) != 0) {
+        if ((pthread_create(&th[i], NULL, threads_searching, (void *)tdata)) != 0) {
             perror("Failed to create thread");
         }
     }
 
-    for (int i = 0; i < threads_amount; ++i) {
+    for (int i = 0; i < threads_amount; i++) {
         if ((pthread_join(th[i], NULL)) != 0) {
             perror("Failed to join thread");
         }
