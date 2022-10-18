@@ -10,30 +10,42 @@ typedef struct thread_data {
 
 } thread_data;
 
+pthread_mutex_t mutex;
+
 void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
 
+    pthread_mutex_lock(&mutex);
     char *pattern = tdata->pat;
     char *string_from_text = tdata->txt;
     
-    printf("%p\n", tdata -> txt);
-
-    printf("%s\n", pattern);
-    printf("%p\n", string_from_text);
-
     int len_of_pattern = strlen(pattern);
     int len_of_str = strlen(string_from_text);
+    
+
+    printf("%s\n", pattern);
+    printf("%s\n", string_from_text);
  
-    for (int i = 0; i <= len_of_str - len_of_pattern; i++) {
-        int j;
-        for (j = 0; j < len_of_pattern; j++) {
-            if (string_from_text[i + j] != pattern[j])
+    int flag1 = 0;
+ 
+    for (int i = 0; i < len_of_str - len_of_pattern; i++) {
+        for (int j = 0; j < len_of_pattern; j++) {
+            if (string_from_text[i + j] != pattern[j]) {
                 break;
-            if (j == len_of_pattern)
-            printf("Pattern found at index %d \n", i);
+            }
+            if (j == len_of_pattern - 1) {
+                printf("Pattern found at index %d \n", i);
+                flag1 = 1;
+            }
         }
     }
+
+    if (flag1 == 0) {
+        printf("No pattern\n");
+    }
+    
+    pthread_mutex_unlock(&mutex);
     free(tdata);
     return NULL;
 }
@@ -103,6 +115,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < threads_amount; i++) {
 
         thread_data *tdata = malloc(sizeof(thread_data));
+        pthread_mutex_init(&mutex, NULL);
         
         if (flag1 == 1) { // the number of text characters is not 
                           //divisible by the number of threads
@@ -153,6 +166,8 @@ int main(int argc, char *argv[])
             perror("Failed to join thread");
         }
     }
+
+    pthread_mutex_destroy(&mutex);
 
     free(strok);
     free(text);
