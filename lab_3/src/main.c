@@ -10,23 +10,25 @@ typedef struct thread_data {
 
 } thread_data;
 
-pthread_mutex_t mutex;
-
-
 void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
 
-    char *pat = (tdata)-> pat;
-    char *txt = (tdata)-> txt;
+    char *pattern = tdata->pat;
+    char *string_from_text = tdata->txt;
+    
+    printf("%p\n", tdata -> txt);
 
-    int len_of_pattern = strlen(pat);
-    int len_of_str = strlen(txt);
+    printf("%s\n", pattern);
+    printf("%p\n", string_from_text);
+
+    int len_of_pattern = strlen(pattern);
+    int len_of_str = strlen(string_from_text);
  
     for (int i = 0; i <= len_of_str - len_of_pattern; i++) {
         int j;
         for (j = 0; j < len_of_pattern; j++) {
-            if (txt[i + j] != pat[j])
+            if (string_from_text[i + j] != pattern[j])
                 break;
             if (j == len_of_pattern)
             printf("Pattern found at index %d \n", i);
