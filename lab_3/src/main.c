@@ -6,6 +6,7 @@
 #include "time.h"
 
 //valgrind --tool=memcheck ./a.out
+//strace -f -e 'clone' ./a.out
 
 typedef struct thread_data {
 
