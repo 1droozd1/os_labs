@@ -1,3 +1,0 @@
-/home/dr0ozd1/Coding/Lab_os/os_labs/lab_3/CMakeFiles/lab.dir
-/home/dr0ozd1/Coding/Lab_os/os_labs/lab_3/CMakeFiles/edit_cache.dir
-/home/dr0ozd1/Coding/Lab_os/os_labs/lab_3/CMakeFiles/rebuild_cache.dir
