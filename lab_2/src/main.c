@@ -27,7 +27,7 @@ int main()
     else if (id == 0) {
         
         char pipe_1[20], pipe_2[20];
-        snprintf(pipe_1, sizeof(pipe_1), "%d", pipe1[0]); //transform char to string format
+        snprintf(pipe_1, sizeof(pipe_1), "%d", pipe1[0]); //transform int to string format
         snprintf(pipe_2, sizeof(pipe_2), "%d", pipe1[1]);
 
         execlp ("./child_process", pipe_1, pipe_2, NULL);

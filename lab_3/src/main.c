@@ -2,6 +2,7 @@
 #include "stdlib.h"
 #include "pthread.h"
 #include "string.h"
+#include "unistd.h"
 #include "time.h"
 
 //valgrind --tool=memcheck ./a.out
@@ -53,6 +54,8 @@ int main(int argc, char *argv[])
     pthread_t *th;
     int threads_amount = atoi(argv[0]);
 
+    printf("Program pid: %d\n", getpid());
+
     if (threads_amount < 2) {
         printf("Write amount of threads: ");
         scanf("%d", &threads_amount);
@@ -74,7 +77,7 @@ int main(int argc, char *argv[])
     //printf("text = %s\n", text);
 
     char pat[20];
-    printf("Write pattern - ");
+    printf("Write pattern: ");
     scanf("%s", pat);
 
     int lenght_pat = strlen(pat);
