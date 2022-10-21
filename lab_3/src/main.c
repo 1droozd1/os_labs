@@ -2,8 +2,7 @@
 #include "stdlib.h"
 #include "pthread.h"
 #include "string.h"
-
-#include <unistd.h>
+#include "time.h"
 
 //valgrind --tool=memcheck ./a.out
 
@@ -21,9 +20,6 @@ void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
 
-    sleep(1);
-
-    pthread_mutex_lock(&mutex);
     char *pattern = tdata->pat;
     char *string_from_text = tdata->txt;
     int size = tdata -> size;
@@ -51,8 +47,8 @@ void *threads_searching(void* args)
         return (void*) flag2;
     }*/
     
-    pthread_mutex_unlock(&mutex);
     free(tdata);
+    free(string_from_text);
     return NULL;
 }
 
@@ -80,7 +76,7 @@ int main(int argc, char *argv[])
         text[i] = randomletter;
     }
 
-    printf("text = %s\n", text);
+    //printf("text = %s\n", text);
 
     char pat[20];
     printf("Write pattern - ");
@@ -93,6 +89,10 @@ int main(int argc, char *argv[])
         scanf("%s", pat);
         printf("Pattern = %s\n", pat);
     }
+
+    clock_t t1, t2;
+ 
+    t1 = clock();
 
     int max_threads_amount = len_txt / lenght_pat;
 
@@ -118,7 +118,6 @@ int main(int argc, char *argv[])
     }
 
     int j = 0;
-    pthread_mutex_init(&mutex, NULL);
 
     for (int i = 0; i < threads_amount; i++) {
 
@@ -131,13 +130,11 @@ int main(int argc, char *argv[])
 
                 strok = (char*) malloc((kolSym_in_str + (len_txt % threads_amount)) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + (len_txt % threads_amount));
-                //printf("%d %s\n", i + 1, strok);
                 
             } else {
 
                 strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                //printf("%d %s\n", i + 1, strok);
 
             }
 
@@ -147,13 +144,11 @@ int main(int argc, char *argv[])
 
                 strok = (char*) malloc((kolSym_in_str) * sizeof(char));
                 strncpy(strok, (char *) &text[j], kolSym_in_str);
-                //printf("%d %s\n", i + 1, strok);
 
             } else {
 
                 strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                //printf("%d %s\n", i + 1, strok);
 
             }
         }
@@ -175,14 +170,16 @@ int main(int argc, char *argv[])
         }
     }
 
-    pthread_mutex_destroy(&mutex);
     /*if (*flag2 == 0) {
         printf("Pattern didn't find in text\n");
     }*/
 
-    free(strok);
     free(text);
     free(th);
+
+    t2 = clock();
+
+    printf("Сompilation time: %f\n", (t2 - t1) / (double)CLOCKS_PER_SEC);
     
     return 0;
 }

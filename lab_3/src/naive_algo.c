@@ -10,9 +10,6 @@ void *search_in(char* pat, char* txt)
 
     int len_of_str = strlen(txt);
 
-    printf("%s\n", txt);
-    printf("%s\n", pat);
-
     int flag1 = 0;
  
     for (int i = 0; i < len_of_str - len_of_pattern; i++) {
