@@ -41,11 +41,6 @@ void *threads_searching(void* args)
             }
         }
     }
-
-    /*int* flag2 = &flag1;
-    if (flag1 == 0) {
-        return (void*) flag2;
-    }*/
     
     free(tdata);
     free(string_from_text);
@@ -111,7 +106,6 @@ int main(int argc, char *argv[])
     char *strok;
 
     int flag1 = 0;
-    //int* flag2;
 
     if (len_txt % threads_amount != 0) {
         flag1 = 1;
@@ -165,14 +159,10 @@ int main(int argc, char *argv[])
     }
 
     for (int i = 0; i < threads_amount; i++) {
-        if ((pthread_join(th[i], /*(void **) &flag2*/ NULL)) != 0) {
+        if ((pthread_join(th[i], NULL)) != 0) {
             perror("Failed to join thread");
         }
     }
-
-    /*if (*flag2 == 0) {
-        printf("Pattern didn't find in text\n");
-    }*/
 
     free(text);
     free(th);

@@ -1,6 +1,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "time.h"
 
 void *search_in(char* pat, char* txt)
 {
@@ -34,6 +35,7 @@ int main()
     char pat[20];
     printf("pat = ");
     scanf("%s", pat);
+    clock_t t1, t2;
 
     int kol_in_txt;
 
@@ -47,11 +49,16 @@ int main()
     for (int i = 0; i < kol_in_txt; i++) {
         text[i] = "ABC"[random () % 3];
     }
-
-    printf("%s\n", text);
+    
     printf("%s\n", pat);
 
+    t1 = clock();
+
     search_in(pat, text);
+
+    t2 = clock();
+
+    printf("Compilation time: %f\n", (t2 - t1) /  (double)CLOCKS_PER_SEC);
 
     return 0;
 }
