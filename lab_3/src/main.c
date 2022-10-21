@@ -5,8 +5,11 @@
 
 #include <unistd.h>
 
+//valgrind --tool=memcheck ./a.out
+
 typedef struct thread_data {
 
+    long int size;
     char *pat;
     char *txt;
 
@@ -23,13 +26,10 @@ void *threads_searching(void* args)
     pthread_mutex_lock(&mutex);
     char *pattern = tdata->pat;
     char *string_from_text = tdata->txt;
+    int size = tdata -> size;
     
     int len_of_pattern = strlen(pattern);
     int len_of_str = strlen(string_from_text);
-    
-
-    printf("%s\n", pattern);
-    printf("%s\n", string_from_text);
  
     int flag1 = 0;
  
@@ -39,15 +39,17 @@ void *threads_searching(void* args)
                 break;
             }
             if (j == len_of_pattern - 1) {
-                printf("Pattern found at index %d \n", i);
+                int size1 = i + size;
+                printf("Pattern found at index: %d\n", size1);
                 flag1 = 1;
             }
         }
     }
 
+    /*int* flag2 = &flag1;
     if (flag1 == 0) {
-        printf("No pattern\n");
-    }
+        return (void*) flag2;
+    }*/
     
     pthread_mutex_unlock(&mutex);
     free(tdata);
@@ -109,6 +111,7 @@ int main(int argc, char *argv[])
     char *strok;
 
     int flag1 = 0;
+    //int* flag2;
 
     if (len_txt % threads_amount != 0) {
         flag1 = 1;
@@ -128,13 +131,13 @@ int main(int argc, char *argv[])
 
                 strok = (char*) malloc((kolSym_in_str + (len_txt % threads_amount)) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + (len_txt % threads_amount));
-                printf("%d %s\n", i + 1, strok);
+                //printf("%d %s\n", i + 1, strok);
                 
             } else {
 
                 strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                printf("%d %s\n", i + 1, strok);
+                //printf("%d %s\n", i + 1, strok);
 
             }
 
@@ -144,26 +147,20 @@ int main(int argc, char *argv[])
 
                 strok = (char*) malloc((kolSym_in_str) * sizeof(char));
                 strncpy(strok, (char *) &text[j], kolSym_in_str);
-                printf("%d %s\n", i + 1, strok);
+                //printf("%d %s\n", i + 1, strok);
 
             } else {
 
                 strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
                 strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-                printf("%d %s\n", i + 1, strok);
+                //printf("%d %s\n", i + 1, strok);
 
             }
         }
 
-        tdata -> pat = (char *)&pat;
-        tdata -> txt = (char *)&strok;
-
-        /*char *pointer;
-        pointer = (char *) &strok;
-
-        printf("%p\n", &strok);
-        printf("%s\n", *pointer);
-        printf("%c\n", *(tdata -> txt));*/
+        tdata -> pat = (char *)pat;
+        tdata -> txt = (char *)strok;
+        tdata -> size = j;
 
         j += kolSym_in_str;
 
@@ -173,12 +170,15 @@ int main(int argc, char *argv[])
     }
 
     for (int i = 0; i < threads_amount; i++) {
-        if ((pthread_join(th[i], NULL)) != 0) {
+        if ((pthread_join(th[i], /*(void **) &flag2*/ NULL)) != 0) {
             perror("Failed to join thread");
         }
     }
 
     pthread_mutex_destroy(&mutex);
+    /*if (*flag2 == 0) {
+        printf("Pattern didn't find in text\n");
+    }*/
 
     free(strok);
     free(text);
