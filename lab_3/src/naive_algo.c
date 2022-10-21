@@ -34,14 +34,14 @@ void *search_in(char* pat, char* txt)
 
 int main()
 {
+    char pat[20];
     printf("pat = ");
-    //scanf("%s", pat);
-    char pat[] = "AB";
+    scanf("%s", pat);
 
-    int kol_in_txt = 31;
+    int kol_in_txt;
 
-    //printf("amount in text = ");
-    //scanf("%d", &kol_in_txt);
+    printf("amount in text = ");
+    scanf("%d", &kol_in_txt);
     int lenght_of_pat = strlen(pat);
 
 
