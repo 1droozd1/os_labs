@@ -11,37 +11,37 @@
 typedef struct thread_data {
 
     long int size;
+    long int kol_sym;
     char *pat;
     char *txt;
 
 } thread_data;
 
-pthread_mutex_t mutex;
 
 void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
 
-    char *pattern = tdata->pat;
-    char *string_from_text = tdata->txt;
-    int size = tdata -> size;
-    
-    int len_of_pattern = strlen(pattern);
-    int len_of_str = strlen(string_from_text);
+    char *pattern = tdata -> pat;
+    long int count = tdata -> size;
+    long int size = tdata -> kol_sym;
+    char *text = tdata -> txt;
 
-    printf("%s\n", string_from_text);
+    char *string_from_text;
+    string_from_text = (char *) malloc((size + 1) * sizeof(char));
+    strncpy(string_from_text, (char *) &text[count], size);
+    string_from_text[size] = '\0';
+
+
+    int len_of_pattern = strlen(pattern);
  
-    int flag1 = 0;
- 
-    for (int i = 0; i < len_of_str - len_of_pattern; i++) {
+    for (int i = 0; i < size - len_of_pattern; i++) {
         for (int j = 0; j < len_of_pattern; j++) {
             if (string_from_text[i + j] != pattern[j]) {
                 break;
             }
             if (j == len_of_pattern - 1) {
-                int size1 = i + size;
-                printf("Pattern found at index: %d\n", size1);
-                flag1 = 1;
+                printf("Pattern found at index: %ld\n", count + 1);
             }
         }
     }
@@ -56,8 +56,6 @@ int main(int argc, char *argv[])
 {
     pthread_t *th;
     int threads_amount = atoi(argv[0]);
-
-    printf("Program pid: %d\n", getpid());
 
     if (threads_amount < 2) {
         printf("Write amount of threads: ");
@@ -76,8 +74,6 @@ int main(int argc, char *argv[])
         char randomletter = "ABC"[random () % 3];
         text[i] = randomletter;
     }
-
-    printf("text = %s\n", text);
 
     char pat[20];
     printf("Write pattern: ");
@@ -128,33 +124,27 @@ int main(int argc, char *argv[])
 
             if (i == (threads_amount - 1)) {
 
-                strok = (char*) malloc((kolSym_in_str + (len_txt % threads_amount)) * (sizeof(char)));
-                strncpy(strok, (char *) &text[j], kolSym_in_str + (len_txt % threads_amount));
+                tdata -> kol_sym = kolSym_in_str + (len_txt % threads_amount) + 1;
                 
             } else {
 
-                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
-                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
+                tdata -> kol_sym = kolSym_in_str + lenght_pat;
 
             }
 
         } else { //the number of characters divided by the number of threads (without modulo)
 
-            if (i == (threads_amount - 1)) {
+            if (i != (threads_amount - 1)) {
 
-                strok = (char*) malloc((kolSym_in_str) * sizeof(char));
-                strncpy(strok, (char *) &text[j], kolSym_in_str);
+                tdata -> kol_sym = kolSym_in_str + lenght_pat - 1;
 
             } else {
-
-                strok = (char*) malloc((kolSym_in_str + lenght_pat - 1) * (sizeof(char)));
-                strncpy(strok, (char *) &text[j], kolSym_in_str + lenght_pat - 1);
-
+                tdata -> kol_sym = kolSym_in_str;
             }
         }
 
         tdata -> pat = (char *)pat;
-        tdata -> txt = (char *)strok;
+        tdata -> txt = (char *)text;
         tdata -> size = j;
 
         j += kolSym_in_str;
