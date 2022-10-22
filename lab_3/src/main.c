@@ -28,6 +28,8 @@ void *threads_searching(void* args)
     
     int len_of_pattern = strlen(pattern);
     int len_of_str = strlen(string_from_text);
+
+    printf("%s\n", string_from_text);
  
     int flag1 = 0;
  
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
         text[i] = randomletter;
     }
 
-    //printf("text = %s\n", text);
+    printf("text = %s\n", text);
 
     char pat[20];
     printf("Write pattern: ");
