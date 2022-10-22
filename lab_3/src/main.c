@@ -10,7 +10,6 @@
 
 typedef struct thread_data {
 
-    int i;
     long int size;
     long int kol_sym;
     char *pat;
@@ -23,20 +22,18 @@ void *threads_searching(void* args)
 {
     thread_data *tdata = (thread_data *)args;
 
-    char *pattern = tdata->pat;
+    char *pattern = tdata -> pat;
     long int count = tdata -> size;
     long int size = tdata -> kol_sym;
-    int number_ofThread = (tdata -> i) + 1;
     char *text = tdata -> txt;
 
     char *string_from_text;
-    string_from_text = (char *) malloc((size) * sizeof(char));
+    string_from_text = (char *) malloc((size + 1) * sizeof(char));
     strncpy(string_from_text, (char *) &text[count], size);
+    string_from_text[size] = '\0';
 
 
     int len_of_pattern = strlen(pattern);
-
-    printf("%d %s\n", number_ofThread, string_from_text);
  
     for (int i = 0; i < size - len_of_pattern; i++) {
         for (int j = 0; j < len_of_pattern; j++) {
@@ -60,8 +57,6 @@ int main(int argc, char *argv[])
     pthread_t *th;
     int threads_amount = atoi(argv[0]);
 
-    printf("Program pid: %d\n", getpid());
-
     if (threads_amount < 2) {
         printf("Write amount of threads: ");
         scanf("%d", &threads_amount);
@@ -79,8 +74,6 @@ int main(int argc, char *argv[])
         char randomletter = "ABC"[random () % 3];
         text[i] = randomletter;
     }
-
-    printf("text = %s\n", text);
 
     char pat[20];
     printf("Write pattern: ");
@@ -144,12 +137,12 @@ int main(int argc, char *argv[])
             if (i != (threads_amount - 1)) {
 
                 tdata -> kol_sym = kolSym_in_str + lenght_pat - 1;
+
             } else {
                 tdata -> kol_sym = kolSym_in_str;
             }
         }
 
-        tdata -> i = i;
         tdata -> pat = (char *)pat;
         tdata -> txt = (char *)text;
         tdata -> size = j;
