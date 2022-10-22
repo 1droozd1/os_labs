@@ -51,6 +51,7 @@ int main()
     }
     
     printf("%s\n", pat);
+    printf("%s\n", text);
 
     t1 = clock();
 
