@@ -5,11 +5,7 @@
 #include "fcntl.h"
 #include "semaphore.h"
 
-typedef struct numbers
-{
-    int num;
-    int st;
-} numbers;
+#include "functions.h"
 
 
 
@@ -36,7 +32,10 @@ int main(int args, char *argv[])
     }
     // Child Process
     else if (id == 0) {
-    
+
+        execlp ("./child_process", mapped, NULL);
+        fprintf(stderr, "\nExec didn't work...\n");
+        exit(1);
 
     }
     //Parent process
@@ -49,6 +48,6 @@ int main(int args, char *argv[])
     }
 
 
-
+    munmap(mapped, sizeof(numbers));
     return 0;
 }
