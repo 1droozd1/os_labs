@@ -1,2 +1,2 @@
-Интересная информация про map функцию:\
-https://linuxhint.com/using_mmap_function_linux/
+Полезная инфа:\
+https://www.opennet.ru/man.shtml?topic=ftruncate&category=2&russian=0
