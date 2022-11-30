@@ -3,52 +3,54 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <fcntl.h>
-#include <semaphore.h>
+#include <sys/wait.h>
 
-typedef struct numbers
-{
+const unsigned int MAX_LENGTH = 1 * 1024 * 1024;  // Не выделять больше мегабайта памяти
+const unsigned int CHUNK_SIZE = 100;
+
+typedef struct number{
     int num;
-    int st;
-    char *file_name;
-} numbers;
+    int result;
+    char* read_num;
+    char* filename;
+} number;
 
-int human_get(sem_t *semaphore)
+int sum_from_char(char *s)
 {
-    int s;
-    sem_getvalue(semaphore, &s);
-    return s; 
-}
+    int i = 0, sum = 0, n = 0, flag1 = 0;
+    int len = strlen(s);
 
-void human_set(sem_t *semaphore, int n)
-{
-    while (human_get(semaphore) < n)
-    {
-        sem_post(semaphore);
+    for (int i = 0; i < len; ++i) {
+        if (s[i] >= '0' && s[i] <= '9' && flag1 == 0) {
+            n = n * 10 + (s[i] - '0');
+        } else if (flag1 == 1 && s[i] >= '0' && s[i] <= '9') {
+            n = n * 10 - (s[i] - '0');
+        } else if (s[i] == '-') {
+            flag1 = 1;
+        } else if (s[i] == ' ' && flag1 == 1) {
+            flag1 = 0;
+            sum += n;
+            n = 0;
+            continue;
+        } else if (n) {
+            sum += n;
+            n = 0;
+            flag1 = 0;
+        }
     }
-    while (human_get(semaphore) > n)
-    {
-        sem_wait(semaphore);
-    }
+    return sum + n;
 }
 
 
 int main(int args, char *argv[])
 {
     pid_t id;
-    int sum = 0, n = 0;
-    numbers* mapped = (numbers*)mmap(0, sizeof(numbers), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    unsigned int str_len = CHUNK_SIZE;
+    char *str_ptr = malloc(CHUNK_SIZE * sizeof(char));
+    number *buffer;
     char file_name[20];
 
-    if (mapped == MAP_FAILED)
-    {
-        printf("mmap error\n");
-        return -1;
-    }
-
     id = fork();
-    sem_unlink("_sem");
-    sem_t *sem = sem_open("_sem", O_CREAT, 0, 2);
 
     if (id < 0) {
         perror("fork error");
@@ -57,87 +59,85 @@ int main(int args, char *argv[])
     // Child Process
     else if (id == 0) {
 
-        /*execlp ("./child_process", mapped, NULL);
-        fprintf(stderr, "\nExec didn't work...\n");
-        exit(1);*/
-        char file_name_read[20] = "123";
+        char read_file_name[20];
+        strcpy(read_file_name, buffer->filename);
 
-        remove(file_name_read);
+        char* read_sequence_of_numbers;
+        read_sequence_of_numbers = (char*)malloc(sizeof(char) * (buffer->num));
+        strcpy(read_sequence_of_numbers, buffer->read_num);
+
+        printf("[Child Process,  id=%d]: File name from the pipe: %s\n", getpid(), read_file_name);
+        printf("[Child Process,  id=%d]: Numbers from the pipe: %s\n", getpid(), read_sequence_of_numbers);
+
+        remove(read_file_name); //if we have the same file
+
+        buffer->result = sum_from_char(read_sequence_of_numbers);
+
+        free(read_sequence_of_numbers);
 
         FILE *write_res;
-        if ((write_res = fopen(file_name_read, "w")) == NULL) {
+        if ((write_res = fopen(read_file_name, "w")) == NULL) {
             printf("Error: can't open file\n");
             exit(1);
         }
-
-        while(1) 
-        {
-            while(human_get(sem) == 2)
-            {
-                continue;
-            }
-            if (mapped->st == 1) 
-            {
-                sum += mapped->num;
-                fprintf(write_res, "%d", sum);
-                sum = 0;
-                human_set(sem, 2);
-            }
-            else if (mapped->st == 2)
-            {
-                sum += mapped->num;
-                fprintf(write_res, "%d", sum);
-                fclose(write_res);
-                human_set(sem, 0);
-                exit(0);
-            }
-            else if (mapped->st == 0)
-            {
-                sum += mapped->num;
-                human_set(sem, 2);
-            }
-        }
+        fprintf(write_res, "%d", buffer->result);
+        fclose(write_res);
 
     }
     //Parent process
     else {
         printf("[Parent Process, id=%d]: Write name of file: ", getpid());
-        /*fgets(file_name, 20, stdin);
+        fgets(file_name, 20, stdin);
         if (file_name[strlen(file_name) - 1] == '\n')
             file_name[strlen(file_name) - 1] = '\0';
 
-        mapped->file_name = (char *)file_name;*/
+        printf("[Parent Process, id=%d]: Write int numbers: ", getpid());
+        int c;
+        unsigned int i;
+        
+        for (i = 0, c = EOF; (c = getchar()) != '\n' && c != EOF; i++) {
+            str_ptr[i] = c;
 
-        while(human_get(sem) != 0) 
-        {
-            char c;
-            scanf("%d%c", &n, &c);
-            mapped->num = n;
-            if (c == ' ')
-            {
-                mapped->st = 0;
+            if (i == MAX_LENGTH) {
+                free(str_ptr);
+                printf("Слишком много входных данных!\n");
+                exit(1);
             }
-            if (c == '\n')
-            {
-                mapped->st = 1;
-            }
-            if (c == '\0')
-            {
-                mapped->st = 2;
-            }
-            human_set(sem, 1);
-            while(human_get(sem) == 1)
-            {
-                continue;
+        
+            if (i == str_len) {                       // Блок заполнен
+                str_len = i + CHUNK_SIZE;
+                str_ptr = realloc(str_ptr, str_len);  // Расширяем блок на ещё один килобайт
             }
         }
+        str_ptr[i] = '\0';                          // Признак конца строки
 
+        printf("%d\n", str_len + 1);
+
+        printf("1\n");
+
+        buffer = mmap(NULL, sizeof(number), PROT_READ | PROT_WRITE, MAP_SHARED, 0, 0);
+        if (buffer == NULL) {
+            perror("Can't mmap");
+            return -1;
+        }
+
+        printf("2\n");
+
+        buffer->num = str_len;
+        printf("3\n");
+        buffer->filename = (char*) file_name;
+        buffer->read_num = (char*) str_ptr;
+        
+        waitpid(id, NULL, 0);
+
+        printf("[Parent Process, id=%d] Result: %d", getpid(), buffer->result);
+
+        free(str_ptr);
+
+        if (munmap(buffer, sizeof(number))!= 0) {
+            printf("UnMapping Failed\n");
+            return 1;
+        }
     }
-
-
-    munmap(mapped, sizeof(numbers));
-    sem_close(sem);
-    sem_destroy(sem);
-
     return 0;
 }
