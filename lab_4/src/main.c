@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#include <semaphore.h>
+#include <fcntl.h>
 
 const unsigned int MAX_LENGTH = 1 * 1024 * 1024;  // Не выделять больше мегабайта памяти
 const unsigned int CHUNK_SIZE = 100;
@@ -50,6 +52,9 @@ int main(int args, char *argv[])
     number *buffer;
     char file_name[20];
 
+    sem_t semaphore;
+    sem_init(&semaphore, 0, 1);
+
     id = fork();
 
     if (id < 0) {
@@ -58,9 +63,11 @@ int main(int args, char *argv[])
     }
     // Child Process
     else if (id == 0) {
-
+        printf("1\n");
+        sem_wait(&semaphore);
         char read_file_name[20];
         strcpy(read_file_name, buffer->filename);
+        printf("1\n");
 
         char* read_sequence_of_numbers;
         read_sequence_of_numbers = (char*)malloc(sizeof(char) * (buffer->num));
@@ -82,6 +89,8 @@ int main(int args, char *argv[])
         }
         fprintf(write_res, "%d", buffer->result);
         fclose(write_res);
+        sem_post(&semaphore);
+        exit(0);
 
     }
     //Parent process
@@ -112,32 +121,33 @@ int main(int args, char *argv[])
         str_ptr[i] = '\0';                          // Признак конца строки
 
         printf("%d\n", str_len + 1);
+        printf("%s\n", str_ptr);
 
-        printf("1\n");
-
-        buffer = mmap(NULL, sizeof(number), PROT_READ | PROT_WRITE, MAP_SHARED, 0, 0);
+        buffer = mmap(NULL, sizeof(number), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, 0, 0);
         if (buffer == NULL) {
             perror("Can't mmap");
             return -1;
         }
 
-        printf("2\n");
-
+        sem_wait(&semaphore);
         buffer->num = str_len;
-        printf("3\n");
         buffer->filename = (char*) file_name;
         buffer->read_num = (char*) str_ptr;
+        sem_post(&semaphore);
+
+        id = 0;
         
-        waitpid(id, NULL, 0);
-
-        printf("[Parent Process, id=%d] Result: %d", getpid(), buffer->result);
-
-        free(str_ptr);
-
-        if (munmap(buffer, sizeof(number))!= 0) {
-            printf("UnMapping Failed\n");
-            return 1;
-        }
+        sem_wait(&semaphore);
+        printf("[Parent Process, id=%d] Result: %d\n", getpid(), buffer->result);
+        sem_post(&semaphore);
     }
+
+    free(str_ptr);
+
+    if (munmap(buffer, sizeof(number))!= 0) {
+        printf("UnMapping Failed\n");
+        return 1;
+    }
+
     return 0;
 }
