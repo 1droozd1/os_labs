@@ -25,18 +25,6 @@ int human_get(sem_t *semaphore)
     return s; 
 }
 
-void human_set(sem_t *semaphore, int n)
-{
-    while (human_get(semaphore) < n)
-    {
-        sem_post(semaphore);
-    }
-    while (human_get(semaphore) > n)
-    {
-        sem_wait(semaphore);
-    }
-}
-
 int sum_from_char(char *s)
 {
     int i = 0, sum = 0, n = 0, flag1 = 0;
@@ -77,24 +65,22 @@ int main(int args, char *argv[])
         return -1;
     }
 
-    sem_unlink("_sem");
-    sem_t *semaphore = sem_open("_sem", O_CREAT, 0, 2);
+    sem_t *semaphore = mmap(NULL, sizeof(sem_t), PROT_READ |PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    sem_init(semaphore, 1, 0);
 
     id = fork();
+    int k = 0;
 
     if (id < 0) {
         perror("fork error");
         return -1;
     }
+    
     // Child Process
     else if (id == 0) {
         while(1) {
-            while(human_get(semaphore) == 2)
-            {
-                continue;
-            }
-            printf("[Child Process,  id=%d]", getpid());
-            printf("%d\n", human_get(semaphore));
+            sem_wait(semaphore);
+            printf("[Child Process,  id=%d]\n", getpid());
             printf("%p\n", &buffer->filename);
 
             char read_file_name[20];
@@ -121,7 +107,8 @@ int main(int args, char *argv[])
             printf("Результат: %d\n", buffer->result);
             fprintf(write_res, "%d", buffer->result);
 
-            human_set(semaphore, 0);
+            //human_set(semaphore, 0);
+            sem_post(semaphore);
             fclose(write_res);
             exit(0);
         }
@@ -129,56 +116,55 @@ int main(int args, char *argv[])
     }
     //Parent process
     else if (id != 0) {
-        while(human_get(semaphore) != 0) {
-            printf("[Parent Process, id=%d]: Write name of file: ", getpid());
-            fgets(file_name, 20, stdin);
-            if (file_name[strlen(file_name) - 1] == '\n')
-                file_name[strlen(file_name) - 1] = '\0';
+        printf("[Parent Process, id=%d]: Write name of file: ", getpid());
+        fgets(file_name, 20, stdin);
+        if (file_name[strlen(file_name) - 1] == '\n')
+            file_name[strlen(file_name) - 1] = '\0';
 
-            printf("[Parent Process, id=%d]: Write int numbers: ", getpid());
-            int c;
-            unsigned int i;
+        printf("[Parent Process, id=%d]: Write int numbers: ", getpid());
+        int c;
+        unsigned int i;
         
-            for (i = 0, c = EOF; (c = getchar()) != '\n' && c != EOF; i++) {
-                str_ptr[i] = c;
+        for (i = 0, c = EOF; (c = getchar()) != '\n' && c != EOF; i++) {
+            str_ptr[i] = c;
 
-                if (i == MAX_LENGTH) {
-                    free(str_ptr);
-                    printf("Слишком много входных данных!\n");
-                    exit(1);
-                }
-        
-                if (i == str_len) {                         // Блок заполнен
-                    str_len = i + CHUNK_SIZE;
-                    str_ptr = realloc(str_ptr, str_len);    // Расширяем блок на ещё один килобайт
-                }
+            if (i == MAX_LENGTH) {
+                free(str_ptr);
+                printf("Слишком много входных данных!\n");
+                exit(1);
             }
-            str_ptr[i] = '\0';                          // Признак конца строки
-
-            buffer->num = str_len;
-            buffer->filename = (char*) file_name;
-            buffer->read_num = (char*) str_ptr;
-
-            printf("%p\n", &buffer->filename);
-            printf("[Parent Process, id=%d] file name is: %s\n", getpid(), buffer->filename);
-
-            human_set(semaphore, 1);
-            while(human_get(semaphore) == 1)
-            {
-                continue;
+        
+            if (i == str_len) {                         // Блок заполнен
+                str_len = i + CHUNK_SIZE;
+                str_ptr = realloc(str_ptr, str_len);    // Расширяем блок на ещё один килобайт
             }
         }
+        str_ptr[i] = '\0';                          // Признак конца строки
 
+        buffer->num = str_len;
+        buffer->filename = (char*) file_name;
+        buffer->read_num = (char*) str_ptr;
+        
+
+        
+        printf("%p\n", &buffer->filename);
+        printf("[Parent Process, id=%d] file name is: %s\n", getpid(), buffer->filename);
+        sem_post(semaphore);
+
+        printf("%d\n", human_get(semaphore));
+
+        sem_wait(semaphore);
         printf("[Parent Process, id=%d] Result: %d\n", getpid(), buffer->result);
+        sem_post(semaphore);
     }
 
-    //free(str_ptr);
+    free(str_ptr);
 
     if (munmap(buffer, sizeof(number))!= 0) {
         printf("UnMapping Failed\n");
         return 1;
     }
-    sem_close(semaphore);
+
     sem_destroy(semaphore);
 
     return 0;
