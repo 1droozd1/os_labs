@@ -69,12 +69,16 @@ int main(int args, char *argv[])
     pid_t id;
     unsigned int str_len = CHUNK_SIZE;
     char *str_ptr = malloc(CHUNK_SIZE * sizeof(char));
-    number *buffer;
     char file_name[20];
+
+    number *buffer = mmap(NULL, sizeof(number), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, 0, 0);
+    if (buffer == NULL) {
+        perror("Can't mmap");
+        return -1;
+    }
 
     sem_unlink("_sem");
     sem_t *semaphore = sem_open("_sem", O_CREAT, 0, 2);
-    printf("%d\n", human_get(semaphore));
 
     id = fork();
 
@@ -84,20 +88,17 @@ int main(int args, char *argv[])
     }
     // Child Process
     else if (id == 0) {
-
         while(1) {
             while(human_get(semaphore) == 2)
             {
                 continue;
             }
-            
-            printf("something\n");
-            char read_file_name[20];
+            printf("[Child Process,  id=%d]", getpid());
             printf("%d\n", human_get(semaphore));
+            printf("%p\n", &buffer->filename);
 
-            printf("%s\n", buffer->filename);
+            char read_file_name[20];
             strcpy(read_file_name, buffer->filename);
-            printf("second\n");
 
             char* read_sequence_of_numbers;
             read_sequence_of_numbers = (char*)malloc(sizeof(char) * (buffer->num));
@@ -125,10 +126,9 @@ int main(int args, char *argv[])
             exit(0);
         }
         
-
     }
     //Parent process
-    else {
+    else if (id != 0) {
         while(human_get(semaphore) != 0) {
             printf("[Parent Process, id=%d]: Write name of file: ", getpid());
             fgets(file_name, 20, stdin);
@@ -155,24 +155,14 @@ int main(int args, char *argv[])
             }
             str_ptr[i] = '\0';                          // Признак конца строки
 
-            printf("%d\n", str_len + 1);
-            printf("%s\n", str_ptr);
-
-            buffer = mmap(NULL, sizeof(number), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, 0, 0);
-            if (buffer == NULL) {
-                perror("Can't mmap");
-                return -1;
-            }
-
             buffer->num = str_len;
             buffer->filename = (char*) file_name;
             buffer->read_num = (char*) str_ptr;
 
-            printf("%d\n", buffer->num);
-            printf("%s\n", buffer->read_num);
+            printf("%p\n", &buffer->filename);
+            printf("[Parent Process, id=%d] file name is: %s\n", getpid(), buffer->filename);
 
             human_set(semaphore, 1);
-            printf("%d\n", human_get(semaphore));
             while(human_get(semaphore) == 1)
             {
                 continue;
@@ -182,7 +172,7 @@ int main(int args, char *argv[])
         printf("[Parent Process, id=%d] Result: %d\n", getpid(), buffer->result);
     }
 
-    free(str_ptr);
+    //free(str_ptr);
 
     if (munmap(buffer, sizeof(number))!= 0) {
         printf("UnMapping Failed\n");
