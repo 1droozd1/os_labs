@@ -69,7 +69,6 @@ int main(int args, char *argv[])
     sem_init(semaphore, 1, 0);
 
     id = fork();
-    int k = 0;
 
     if (id < 0) {
         perror("fork error");
@@ -78,42 +77,41 @@ int main(int args, char *argv[])
     
     // Child Process
     else if (id == 0) {
-        while(1) {
-            sem_wait(semaphore);
-            printf("[Child Process,  id=%d]\n", getpid());
-            printf("%p\n", &buffer->filename);
+        sem_wait(semaphore);
+            
+        printf("[Child Process,  id=%d]\n", getpid());
+        printf("%p\n", &buffer->filename);
 
-            char read_file_name[20];
-            strcpy(read_file_name, buffer->filename);
+        char read_file_name[20];
+        strcpy(read_file_name, buffer->filename);
 
-            char* read_sequence_of_numbers;
-            read_sequence_of_numbers = (char*)malloc(sizeof(char) * (buffer->num));
-            strcpy(read_sequence_of_numbers, buffer->read_num);
+        char* read_sequence_of_numbers;
+        read_sequence_of_numbers = (char*)malloc(sizeof(char) * (buffer->num));
+        strcpy(read_sequence_of_numbers, buffer->read_num);
 
-            printf("[Child Process,  id=%d]: File name from the pipe: %s\n", getpid(), read_file_name);
-            printf("[Child Process,  id=%d]: Numbers from the pipe: %s\n", getpid(), read_sequence_of_numbers);
+        printf("[Child Process,  id=%d]: File name from the pipe: %s\n", getpid(), read_file_name);
+        printf("[Child Process,  id=%d]: Numbers from the pipe: %s\n", getpid(), read_sequence_of_numbers);
 
-            remove(read_file_name); //if we have the same file
+        remove(read_file_name); //if we have the same file
 
-            buffer->result = sum_from_char(read_sequence_of_numbers);
+        buffer->result = sum_from_char(read_sequence_of_numbers);
 
-            free(read_sequence_of_numbers);
+        free(read_sequence_of_numbers);
 
-            FILE *write_res;
-            if ((write_res = fopen(read_file_name, "w")) == NULL) {
-                printf("Error: can't open file\n");
-                exit(1);
-            }
-            printf("Результат: %d\n", buffer->result);
-            fprintf(write_res, "%d", buffer->result);
-
-            //human_set(semaphore, 0);
-            sem_post(semaphore);
-            fclose(write_res);
-            exit(0);
+        FILE *write_res;
+        if ((write_res = fopen(read_file_name, "w")) == NULL) {
+            printf("Error: can't open file\n");
+            exit(1);
         }
+        printf("Результат: %d\n", buffer->result);
+        fprintf(write_res, "%d", buffer->result);
+
+        sem_post(semaphore);
+        fclose(write_res);
+        exit(0);
         
     }
+    
     //Parent process
     else if (id != 0) {
         printf("[Parent Process, id=%d]: Write name of file: ", getpid());
@@ -144,8 +142,6 @@ int main(int args, char *argv[])
         buffer->num = str_len;
         buffer->filename = (char*) file_name;
         buffer->read_num = (char*) str_ptr;
-        
-
         
         printf("%p\n", &buffer->filename);
         printf("[Parent Process, id=%d] file name is: %s\n", getpid(), buffer->filename);
