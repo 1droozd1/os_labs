@@ -13,12 +13,11 @@ const unsigned int CHUNK_SIZE = 100;
 typedef struct number{
     int num;
     int result;
-    int st;
-    char* read_num;
-    char* filename;
+    char read_num[1000];
+    char filename[20];
 } number;
 
-int human_get(sem_t *semaphore)
+int getting_value(sem_t *semaphore)
 {
     int s;
     sem_getvalue(semaphore, &s);
@@ -79,10 +78,9 @@ int main(int args, char *argv[])
     // Child Process
     else if (id == 0) {
         sem_wait(semaphore);
-            
-        printf("[Child Process,  id=%d]\n", getpid());
-        printf("%p\n", &buffer->filename);
 
+        printf("[Child Process,  id=%d]\n", getpid());
+       
         char read_file_name[20];
         strcpy(read_file_name, buffer->filename);
 
@@ -141,29 +139,26 @@ int main(int args, char *argv[])
         str_ptr[i] = '\0';                          // Признак конца строки
 
         buffer->num = str_len;
-        buffer->filename = (char*) file_name;
-        buffer->read_num = (char*) str_ptr;
-        
-        printf("%p\n", &buffer->filename);
+        strcpy(buffer->filename, file_name);
+        strcpy(buffer->read_num, str_ptr);
+
         printf("[Parent Process, id=%d] file name is: %s\n", getpid(), buffer->filename);
-        sem_post(semaphore);
-
-        printf("%d\n", human_get(semaphore));
-
-        sem_wait(semaphore);
-        printf("[Parent Process, id=%d] Result: %d\n", getpid(), buffer->result);
         sem_post(semaphore);
     }
 
     free(str_ptr);
-    printf("%s\n", buffer->filename);
 
     if (munmap(buffer, sizeof(number))!= 0) {
-        printf("UnMapping Failed\n");
+        printf("UnMapping failed\n");
         return 1;
     }
 
     sem_destroy(semaphore);
+
+    if (munmap(semaphore, sizeof(semaphore))!= 0) {
+        printf("UnMapping of semaphore failed\n");
+        return 1;
+    }
 
     return 0;
 }
