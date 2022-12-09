@@ -65,7 +65,7 @@ int main(int args, char *argv[])
         return -1;
     }
 
-    sem_t *semaphore = mmap(NULL, sizeof(sem_t), PROT_READ |PROT_WRITE,MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    sem_t *semaphore = mmap(NULL, sizeof(sem_t), PROT_READ |PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
     sem_init(semaphore, 1, 0);
 
     id = fork();
@@ -74,6 +74,7 @@ int main(int args, char *argv[])
         perror("fork error");
         return -1;
     }
+    
     
     // Child Process
     else if (id == 0) {
@@ -111,7 +112,7 @@ int main(int args, char *argv[])
         exit(0);
         
     }
-    
+
     //Parent process
     else if (id != 0) {
         printf("[Parent Process, id=%d]: Write name of file: ", getpid());
@@ -155,6 +156,7 @@ int main(int args, char *argv[])
     }
 
     free(str_ptr);
+    printf("%s\n", buffer->filename);
 
     if (munmap(buffer, sizeof(number))!= 0) {
         printf("UnMapping Failed\n");
